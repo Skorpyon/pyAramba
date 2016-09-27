@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='pyAramba',
@@ -13,4 +13,14 @@ setup(
     url='http://git.astracode.ru/astracode/pyAramba.git',
     long_description=open('README.md').read(),
     packages=['pyAramba', ],
+    install_requires=[
+              'requests >= 2.11',
+          ],
+    classifiers=[
+          'Operating System :: MacOS :: MacOS X',
+          'Operating System :: Unix',
+          'Development Status :: 3 - Alpha',
+          'Topic :: Utilities',
+          'Programming Language :: Python :: 3',
+        ],
 )
