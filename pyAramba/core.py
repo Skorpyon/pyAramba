@@ -17,9 +17,25 @@ SMS_SENDER_IDS = 'smsSenderIds'
 SINGLE_SMS = 'singleSms'
 
 
+class SmsStatus(object):
+    NEW = 'new'
+    ENROUTE = 'enroute'
+    DELIVERED = 'delivered'
+    UNDELIVERABLE = 'undeliverable'
+    ERROR = 'error'
+
+    CHOICES = (
+        (NEW, 'Новая SMS'),
+        (ENROUTE, 'Отправлено'),
+        (DELIVERED, 'Доставлено'),
+        (UNDELIVERABLE, 'Невозможно доставить'),
+        (ERROR, 'Ошибка при отправке'),
+    )
+
+
 class Sms(object):
 
-    status = 'new'
+    status = SmsStatus.NEW
     send_datetime = None
     use_recipient_timezone = False
 
@@ -77,7 +93,7 @@ class Sms(object):
         }
 
     def send(self):
-        if self.status in ['new', 'error']:
+        if self.status in [SmsStatus.NEW, SmsStatus.ERROR]:
             try:
                 result = self.sender_engine._send_sms(self)
             except ArambaAPIError as e:
