@@ -110,7 +110,7 @@ class Sms(object):
                 self.number = json_result['phoneNumber']
                 self.content = json_result['text']
                 self.planned_utc_datetime = json_result['plannedUtcDateTime']
-                self.delivery_utc_datetime = json_result['plannedUtcDateTime']
+                self.delivery_utc_datetime = json_result['deliveryUtcDateTime']
 
         return self
 

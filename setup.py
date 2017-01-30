@@ -11,7 +11,7 @@ setup(
     author_email='anton.trishenkov@gmail.com',
     license='LICENSE.txt',
     url='http://git.astracode.ru/astracode/pyAramba.git',
-    long_description=open('README.md').read(),
+    long_description=open('README.md', encoding='utf-8').read(),
     packages=['pyAramba', ],
     install_requires=[
               'requests >= 2.11',
