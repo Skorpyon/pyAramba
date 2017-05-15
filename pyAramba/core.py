@@ -14,8 +14,14 @@ ERROR_CODES = [400, 401, 402, 403, 404, 409, 500]
 # Aramba API URLs
 API_URL = 'https://api.aramba.ru'
 SMS_SENDER_IDS = 'smsSenderIds'
-SINGLE_SMS = 'singleSms'
+
 BALANCE = 'balance'
+
+SINGLE_SMS = 'singleSms'
+SMS_SENDINGS = 'smsSendings'
+
+CONTACT_GROUPS = 'contactGroups'
+GROUP_CONTACTS = 'contacts'
 
 
 class SmsStatus(object):
@@ -79,7 +85,6 @@ class Sms(object):
         self.content = content
         self.id = None
 
-
     @property
     def result(self):
         return {
@@ -116,6 +121,85 @@ class Sms(object):
         return self
 
 
+class MultipleSMS(object):
+    results = []
+    status = SmsStatus.NEW
+    send_datetime = None
+    use_recipient_timezone = False
+
+    status_code = None
+    cost = None
+    planned_utc_datetime = None
+    delivery_utc_datetime = None
+
+    def __init__(self, sender_engine, numbers: list, content:  str, sender_id=None,
+                 send_datetime=None, use_recipient_timezone=None):
+        self.sender_engine = sender_engine
+
+        # Proceed number
+        numbers_list = []
+        for number in numbers:
+            number = number.rstrip('+').rstrip('00').strip('-').strip()
+            try:
+                self.number = int(number)
+            except ValueError:
+                raise ArambaValueError('Phone number should be in "+<country_code> XXX XXX XX XX" format.')
+            else:
+                numbers_list.append(number)
+        self.numbers = numbers_list
+
+        # Set sender id
+        if sender_id is not None:
+            self.sender_id = sender_id
+        else:
+            self.sender_id = self.sender_engine.sender_id
+
+        # Proceed send datetime
+        if send_datetime is not None:
+            if isinstance(send_datetime, datetime):
+                self.send_datetime = send_datetime
+            else:
+                raise ArambaValueError('Send_datetime should be a datetime instance.')
+        if use_recipient_timezone is not None:
+            if isinstance(use_recipient_timezone, bool):
+                self.use_recipient_timezone = use_recipient_timezone
+            else:
+                raise ArambaValueError('Use_recipient_timezone should be a boolean.')
+
+        self.content = content
+        self.id = None
+
+    @property
+    def result(self):
+        return self.results
+
+    def send(self):
+        if self.status in [SmsStatus.NEW, SmsStatus.ERROR]:
+            try:
+                result = self.sender_engine._send_bulk_sms(self)
+            except ArambaAPIError as e:
+                self.status = 'error'
+                self.status_code = e.status_code
+
+            else:
+                self.status_code = result.status_code
+                results = []
+                json_result = result.json()
+                for key, value in json_result.values():
+                    results.append({
+                        'status': value['status'].lower(),
+                        'id': value['id'],
+                        'cost': value['cost'],
+                        'number': value['phoneNumber'],
+                        'content': value['text'],
+                        'planned_utc_datetime': value['plannedUtcDateTime'],
+                        'delivery_utc_datetime': value['deliveryUtcDateTime']
+                    })
+                self.results = results
+
+        return self
+
+
 class SmsSender(object):
     # SMS Queue
     _queue = []
@@ -141,7 +225,13 @@ class SmsSender(object):
 
     @staticmethod
     def _build_url(url):
-        return '%s/%s' % (API_URL, url)
+        url_list = [API_URL, ]
+        if isinstance(url, str):
+            url_list.append(url)
+        elif isinstance(url, (list, set)):
+            for u in url:
+                url_list.append(u)
+        return '/'.join(url_list)
 
     @staticmethod
     def _raise_aramba_api_error(status_code, message):
@@ -221,6 +311,61 @@ class SmsSender(object):
     def ask_balance(self):
         url = self._build_url(BALANCE)
         return self._make_request('get', url)
+
+    # Contact groups
+    def create_group(self, name):
+        url = self._build_url(CONTACT_GROUPS)
+        data = {'name': name}
+        return self._make_request('post', url, data)
+
+    def retrieve_group(self, group_id):
+        url = self._build_url([CONTACT_GROUPS, group_id])
+        return self._make_request('get', url)
+
+    def update_group(self, group_id, name):
+        url = self._build_url([CONTACT_GROUPS, group_id])
+        data = {'name': name}
+        return self._make_request('put', url, data)
+
+    def delete_group(self, group_id):
+        url = self._build_url([CONTACT_GROUPS, group_id])
+        return self._make_request('delete', url)
+
+    # Contacts
+    def create_contact(self, group_id, data):
+        url = self._build_url([CONTACT_GROUPS, group_id, GROUP_CONTACTS])
+        return self._make_request('post', url, data)
+
+    def retrieve_contact(self, group_id, contact_id):
+        url = self._build_url(
+            [CONTACT_GROUPS, group_id, GROUP_CONTACTS, contact_id])
+        return self._make_request('get', url)
+
+    def update_contact(self, group_id, contact_id, data):
+        url = self._build_url(
+            [CONTACT_GROUPS, group_id, GROUP_CONTACTS, contact_id])
+        return self._make_request('put', url, data)
+
+    def delete_contact(self, group_id, contact_id):
+        url = self._build_url(
+            [CONTACT_GROUPS, group_id, GROUP_CONTACTS, contact_id])
+        return self._make_request('delete', url)
+
+    # Bulk SMS sendings
+    def _send_bulk_sms(self, sms):
+        if not isinstance(sms, Sms):
+            raise ArambaValueError(
+                'Value for send_sms should be Sms instance.')
+        data = {
+            'senderId': sms.sender_id,
+            'SendDateTime': sms.send_datetime,
+            'UseRecipientTimeZone': sms.use_recipient_timezone,
+            'PhoneNumbers': sms.numbers,
+            'Text': sms.content
+        }
+        url = self._build_url([SINGLE_SMS, 'multiple'])
+        data = json.dumps(data)
+        return self._make_request(method='post', url=url, data=data)
 
     def _send_sms(self, sms):
         if not isinstance(sms, Sms):
