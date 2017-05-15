@@ -185,7 +185,7 @@ class MultipleSMS(object):
                 self.status_code = result.status_code
                 results = []
                 json_result = result.json()
-                for key, value in json_result.values():
+                for key, value in json_result.items():
                     results.append({
                         'status': value['status'].lower(),
                         'id': value['id'],
