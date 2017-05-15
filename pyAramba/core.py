@@ -353,9 +353,9 @@ class SmsSender(object):
 
     # Bulk SMS sendings
     def _send_bulk_sms(self, sms):
-        if not isinstance(sms, Sms):
+        if not isinstance(sms, MultipleSMS):
             raise ArambaValueError(
-                'Value for send_sms should be Sms instance.')
+                'Value for send_sms should be MultipleSMS instance.')
         data = {
             'senderId': sms.sender_id,
             'SendDateTime': sms.send_datetime,
