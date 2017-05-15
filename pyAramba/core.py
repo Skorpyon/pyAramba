@@ -15,6 +15,7 @@ ERROR_CODES = [400, 401, 402, 403, 404, 409, 500]
 API_URL = 'https://api.aramba.ru'
 SMS_SENDER_IDS = 'smsSenderIds'
 SINGLE_SMS = 'singleSms'
+BALANCE = 'balance'
 
 
 class SmsStatus(object):
@@ -216,6 +217,10 @@ class SmsSender(object):
             self._available_sender_ids = json_response['items']
 
         return self._available_sender_ids
+
+    def ask_balance(self):
+        url = self._build_url(BALANCE)
+        return self._make_request('get', url)
 
     def _send_sms(self, sms):
         if not isinstance(sms, Sms):
