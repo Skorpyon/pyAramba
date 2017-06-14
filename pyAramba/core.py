@@ -122,7 +122,7 @@ class Sms(object):
 
 
 class MultipleSMS(object):
-    results = []
+    results = list()
     status = SmsStatus.NEW
     send_datetime = None
     use_recipient_timezone = False
@@ -137,7 +137,7 @@ class MultipleSMS(object):
         self.sender_engine = sender_engine
 
         # Proceed number
-        numbers_list = []
+        numbers_list = list()
         for number in numbers:
             number = number.rstrip('+').rstrip('00').strip('-').strip()
             try:
@@ -183,7 +183,7 @@ class MultipleSMS(object):
 
             else:
                 self.status_code = result.status_code
-                results = []
+                results = list()
                 json_result = result.json()
                 for key, value in json_result.items():
                     results.append({
@@ -202,7 +202,7 @@ class MultipleSMS(object):
 
 class SmsSender(object):
     # SMS Queue
-    _queue = []
+    _queue = list()
 
     # Sender IDs
     default_sender_id = None
@@ -225,7 +225,7 @@ class SmsSender(object):
 
     @staticmethod
     def _build_url(url):
-        url_list = [API_URL, ]
+        url_list = list(API_URL)
         if isinstance(url, str):
             url_list.append(url)
         elif isinstance(url, (list, set)):
