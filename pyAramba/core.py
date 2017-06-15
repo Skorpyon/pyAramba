@@ -225,7 +225,7 @@ class SmsSender(object):
 
     @staticmethod
     def _build_url(url):
-        url_list = list(API_URL)
+        url_list = [API_URL, ]
         if isinstance(url, str):
             url_list.append(url)
         elif isinstance(url, (list, set)):
