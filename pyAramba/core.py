@@ -42,7 +42,6 @@ class SmsStatus(object):
 
 class Sms(object):
 
-    status = SmsStatus.NEW
     send_datetime = None
     use_recipient_timezone = False
 
@@ -54,6 +53,8 @@ class Sms(object):
     def __init__(self, sender_engine, number: str, content:  str, sender_id=None,
                  send_datetime=None, use_recipient_timezone=None):
         self.sender_engine = sender_engine
+
+        self.status = SmsStatus.NEW
 
         # Proceed number
         number = number.rstrip('+').rstrip('00').strip('-').strip()
@@ -122,8 +123,7 @@ class Sms(object):
 
 
 class MultipleSMS(object):
-    results = list()
-    status = SmsStatus.NEW
+
     send_datetime = None
     use_recipient_timezone = False
 
@@ -135,6 +135,9 @@ class MultipleSMS(object):
     def __init__(self, sender_engine, numbers: list, content:  str, sender_id=None,
                  send_datetime=None, use_recipient_timezone=None):
         self.sender_engine = sender_engine
+
+        self.results = []
+        self.status = SmsStatus.NEW
 
         # Proceed number
         numbers_list = list()
@@ -201,17 +204,19 @@ class MultipleSMS(object):
 
 
 class SmsSender(object):
-    # SMS Queue
-    _queue = list()
-
     # Sender IDs
     default_sender_id = None
-    _available_sender_ids = None
-    _sms_sender_offset = 0
-    _sms_sender_limit = 50
 
     def __init__(self, api_key: str, sender_id=None):
         self.api_key = api_key
+
+        # SMS Queue
+        self._queue = []
+
+        # Sender IDs
+        self._available_sender_ids = None
+        self._sms_sender_offset = 0
+        self._sms_sender_limit = 50
 
         # Set Sender Id
         if sender_id is None and self.default_sender_id is None:
